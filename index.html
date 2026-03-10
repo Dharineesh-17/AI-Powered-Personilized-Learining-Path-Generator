@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Path Master Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Plus Jakarta Sans', sans-serif; } </style>
+</head>
+<body class="bg-[#0f172a] text-slate-200 min-h-screen p-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 mb-4">
+                PATH MASTER PRO
+            </h1>
+            <p class="text-slate-400 text-lg">Your AI-powered roadmap to mastery.</p>
+        </div>
+
+        <div class="flex gap-4 mb-12 bg-slate-800/50 p-2 rounded-2xl border border-slate-700 focus-within:border-blue-500 transition-all shadow-2xl">
+            <input type="text" id="topic" placeholder="What do you want to master?" 
+                   class="bg-transparent w-full p-4 outline-none text-white text-lg">
+            <button onclick="generate()" class="bg-blue-600 hover:bg-blue-500 px-8 py-4 rounded-xl font-bold transition-all transform hover:scale-105 active:scale-95">
+                Generate
+            </button>
+        </div>
+
+        <div id="loading" class="hidden text-center text-blue-400 animate-pulse mb-8 font-bold">ARCHITECTING YOUR PATH...</div>
+        <div id="results" class="space-y-6"></div>
+    </div>
+
+    <script>
+        async function generate() {
+            const resultsDiv = document.getElementById('results');
+            const loading = document.getElementById('loading');
+            const topic = document.getElementById('topic').value;
+            
+            if(!topic) return;
+
+            loading.classList.remove('hidden');
+            resultsDiv.innerHTML = "";
+            
+            try {
+                const response = await fetch(`/generate?topic=${encodeURIComponent(topic)}`);
+                const data = await response.json();
+                loading.classList.add('hidden');
+
+                if(data.summary) {
+                    resultsDiv.innerHTML += `<p class="text-slate-400 italic mb-10 text-center px-6">"${data.summary}"</p>`;
+                }
+
+                // YOUR MASTER LINK LOGIC INTEGRATED HERE
+                data.steps.forEach((step, i) => {
+                    const cleanLink = (step.link && step.link.startsWith('http')) 
+                        ? step.link 
+                        : `https://www.google.com/search?q=${encodeURIComponent(step.title)}`;
+
+                    resultsDiv.innerHTML += `
+                        <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl border-l-4 border-l-blue-500 hover:bg-slate-700/50 transition-all shadow-xl">
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-xs font-bold text-blue-400 uppercase tracking-widest">Phase ${i+1} • ${step.time || 'Study'}</span>
+                                <a href="${cleanLink}" target="_blank" rel="noopener noreferrer" 
+                                   class="text-[10px] bg-blue-900/30 text-blue-300 px-3 py-1 rounded border border-blue-500/30 hover:bg-blue-500 hover:text-white transition font-bold">
+                                   SOURCE ↗
+                                </a>
+                            </div>
+                            <h3 class="text-xl font-bold text-white mb-2">${step.title}</h3>
+                            <p class="text-slate-400 text-sm leading-relaxed">${step.desc || step.description}</p>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                loading.classList.add('hidden');
+                resultsDiv.innerHTML = "<p class='text-red-400 text-center'>Connection lost. Restart your Python server!</p>";
+            }
+        }
+    </script>
+</body>
+</html>
